@@ -9,21 +9,19 @@ export function useAutoplay() {
     try {
       setEnabled(localStorage.getItem(AUTOPLAY_KEY) === "true");
     } catch {
-      /* silently fail */
+      // Storage can be blocked (private mode, disabled cookies); autoplay then stays off.
     }
   }, []);
 
   const toggle = useCallback(() => {
-    setEnabled((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(AUTOPLAY_KEY, String(next));
-      } catch {
-        /* silently fail */
-      }
-      return next;
-    });
-  }, []);
+    const next = !enabled;
+    setEnabled(next);
+    try {
+      localStorage.setItem(AUTOPLAY_KEY, String(next));
+    } catch {
+      // Storage can be blocked; the choice then lasts only for this page.
+    }
+  }, [enabled]);
 
   return [enabled, toggle] as const;
 }
