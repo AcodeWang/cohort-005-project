@@ -50,7 +50,7 @@ import { LockedLesson } from "~/components/lesson/locked-lesson";
 import { FullLesson } from "~/components/lesson/full-lesson";
 import { data, isRouteErrorResponse } from "react-router";
 import { z } from "zod";
-import { parseFormData } from "~/lib/validation";
+import { parseFormData, parseParams } from "~/lib/validation";
 
 const createCommentSchema = z.object({
   intent: z.literal("create-comment"),
@@ -84,6 +84,29 @@ const submitQuizSchema = z.object({
   intent: z.literal("submit-quiz"),
   quizId: z.coerce.number().int().positive(),
 });
+
+const lessonParamsSchema = z.object({
+  lessonId: z.coerce.number().int().positive(),
+});
+
+const QUIZ_ANSWER_FIELD = /^question-(\d+)$/;
+const quizAnswerIdSchema = z.coerce.number().int().positive();
+
+/** The quiz form posts one `question-{questionId}` field per answered question. */
+function parseQuizAnswers(formData: FormData): Record<number, number> {
+  const selectedAnswers: Record<number, number> = {};
+  for (const [key, value] of formData.entries()) {
+    const questionId = QUIZ_ANSWER_FIELD.exec(key)?.[1];
+    if (questionId === undefined) continue;
+    const parsedQuestionId = quizAnswerIdSchema.safeParse(questionId);
+    const optionId = quizAnswerIdSchema.safeParse(value);
+    if (!parsedQuestionId.success || !optionId.success) {
+      throw data("Invalid quiz answer", { status: 400 });
+    }
+    selectedAnswers[parsedQuestionId.data] = optionId.data;
+  }
+  return selectedAnswers;
+}
 
 /**
  * The course named by this route's slug, through this lesson. A lesson in
@@ -127,7 +150,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const { course, person, enrolled, view, take, manage } = decisions;
   const currentUserId = person?.id ?? null;
-  const lessonId = Number(params.lessonId);
+  const { lessonId } = parseParams(params, lessonParamsSchema);
 
   const courseWithDetails = getCourseWithDetails(course.id);
   const lesson = getLessonById(lessonId);
@@ -316,7 +339,7 @@ export async function action({ params, request }: Route.ActionArgs) {
     ref
   );
   const currentUserId = person.id;
-  const lessonId = Number(params.lessonId);
+  const { lessonId } = parseParams(params, lessonParamsSchema);
 
   if (
     intent === "create-comment" ||
@@ -440,17 +463,7 @@ export async function action({ params, request }: Route.ActionArgs) {
       throw data("Quiz not found", { status: 404 });
     }
 
-    // Collect answers: form fields named "question-{questionId}" with value = optionId
-    const selectedAnswers: Record<number, number> = {};
-    for (const [key, value] of formData.entries()) {
-      if (key.startsWith("question-")) {
-        const questionId = Number(key.replace("question-", ""));
-        const optionId = Number(value);
-        if (!isNaN(questionId) && !isNaN(optionId)) {
-          selectedAnswers[questionId] = optionId;
-        }
-      }
-    }
+    const selectedAnswers = parseQuizAnswers(formData);
 
     const result = computeResult(currentUserId, quizId, selectedAnswers);
     if (!result) {
