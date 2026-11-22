@@ -52,7 +52,6 @@ export function FullLesson({
   } = data;
   const [autoplay, toggleAutoplay] = useAutoplay();
   const fetcher = useFetcher({ key: `mark-complete-${lesson.id}` });
-  const quizFetcher = useFetcher({ key: `quiz-${lesson.id}` });
   const navigate = useNavigate();
 
   const isMarking =
@@ -69,9 +68,6 @@ export function FullLesson({
       navigate(`/courses/${course.slug}/lessons/${nextLesson.id}`);
     }
   }, [justCompleted, nextLesson, course.slug, navigate]);
-
-  const quizResult = quizFetcher.data?.quizResult ?? null;
-  const isSubmittingQuiz = quizFetcher.state !== "idle";
 
   return (
     <div className="flex">
@@ -150,13 +146,7 @@ export function FullLesson({
           {currentUserId && <LessonNote note={note} />}
 
           {quiz && enrolled && currentUserId && (
-            <QuizSection
-              quiz={quiz}
-              bestAttempt={bestAttempt}
-              quizResult={quizResult}
-              quizFetcher={quizFetcher}
-              isSubmitting={isSubmittingQuiz}
-            />
+            <QuizSection quiz={quiz} bestAttempt={bestAttempt} />
           )}
 
           {enrolled && currentUserId && (

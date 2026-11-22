@@ -11,12 +11,24 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+type QuizResult = {
+  attemptId: number;
+  score: number;
+  passed: boolean;
+  grade: string;
+  totalCorrect: number;
+  totalQuestions: number;
+  questionResults: Array<{
+    questionId: number;
+    correct: boolean;
+    selectedOptionId: number | null;
+    correctOptionId: number | null;
+  }>;
+};
+
 export function QuizSection({
   quiz,
   bestAttempt,
-  quizResult,
-  quizFetcher,
-  isSubmitting,
 }: {
   quiz: {
     id: number;
@@ -31,23 +43,12 @@ export function QuizSection({
     }>;
   };
   bestAttempt: { score: number; passed: boolean } | null;
-  quizResult: {
-    attemptId: number;
-    score: number;
-    passed: boolean;
-    grade: string;
-    totalCorrect: number;
-    totalQuestions: number;
-    questionResults: Array<{
-      questionId: number;
-      correct: boolean;
-      selectedOptionId: number | null;
-      correctOptionId: number | null;
-    }>;
-  } | null;
-  quizFetcher: ReturnType<typeof useFetcher>;
-  isSubmitting: boolean;
 }) {
+  const quizFetcher = useFetcher<{ quizResult: QuizResult }>({
+    key: `quiz-${quiz.id}`,
+  });
+  const quizResult = quizFetcher.data?.quizResult ?? null;
+  const isSubmitting = quizFetcher.state !== "idle";
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<number, number>
   >({});
