@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { markdown } from "~/lib/text";
-import { flattenCourseLessons, renderThread } from "../index.server";
+import { flattenCourseLessons } from "../course.server";
+import { renderThread } from "../thread.server";
 
 const author = {
   id: 1,

@@ -20,26 +20,32 @@ import { Button } from "~/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import { renderMarkdown } from "~/lib/markdown.server";
 import {
-  calculateWatchProgress,
-  computeResult,
   flattenCourseLessons,
-  getBestAttempt,
-  getCommentById,
   getCourseWithDetails,
-  getLastWatchPosition,
   getLessonById,
+  getModuleById,
+  getUserById,
+} from "~/modules/lesson-viewer/course.server";
+import {
+  calculateWatchProgress,
+  getLastWatchPosition,
   getLessonProgress,
   getLessonProgressForCourse,
-  getLessonThread,
-  getModuleById,
+  markLessonComplete,
+  markLessonInProgress,
+} from "~/modules/lesson-viewer/progress.server";
+import {
+  computeResult,
+  getBestAttempt,
   getQuizById,
   getQuizByLessonId,
   getQuizWithQuestions,
-  getUserById,
-  markLessonComplete,
-  markLessonInProgress,
+} from "~/modules/lesson-viewer/quiz.server";
+import {
+  getCommentById,
+  getLessonThread,
   renderThread,
-} from "~/modules/lesson-viewer/index.server";
+} from "~/modules/lesson-viewer/thread.server";
 import { LockedLesson } from "~/components/lesson/locked-lesson";
 import { FullLesson } from "~/components/lesson/full-lesson";
 import { data, isRouteErrorResponse } from "react-router";
