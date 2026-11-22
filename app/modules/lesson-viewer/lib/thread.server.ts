@@ -10,7 +10,6 @@ import {
 import { asc, eq } from "drizzle-orm";
 import { renderComment } from "~/lib/comment-markdown.server";
 import { markdown, type Markdown } from "~/lib/text";
-import { type RenderedComment } from "~/components/comment-thread";
 
 export type CommentAuthor = {
   id: number;
@@ -110,6 +109,11 @@ export function getLessonThread(lessonId: number): ThreadComment[] {
   return topLevel.filter((c) => !c.deleted || c.replies.length > 0);
 }
 
+export type RenderedThreadComment = Omit<ThreadComment, "replies"> & {
+  bodyHtml: string;
+  replies: RenderedThreadComment[];
+};
+
 /**
  * Renders every comment body to sanitised HTML, preserving the reply nesting.
  * Comments are untrusted input, so this must be renderComment — never
@@ -117,7 +121,7 @@ export function getLessonThread(lessonId: number): ThreadComment[] {
  */
 export async function renderThread(
   nodes: ThreadComment[]
-): Promise<RenderedComment[]> {
+): Promise<RenderedThreadComment[]> {
   return Promise.all(
     nodes.map(async (node) => ({
       ...node,
