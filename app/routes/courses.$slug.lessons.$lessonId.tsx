@@ -80,6 +80,11 @@ const deleteCommentSchema = z.object({
   commentId: z.coerce.number().int(),
 });
 
+const submitQuizSchema = z.object({
+  intent: z.literal("submit-quiz"),
+  quizId: z.coerce.number().int().positive(),
+});
+
 /**
  * The course named by this route's slug, through this lesson. A lesson in
  * another course, or a malformed lesson id, counts as not found.
@@ -429,10 +434,11 @@ export async function action({ params, request }: Route.ActionArgs) {
   }
 
   if (intent === "submit-quiz") {
-    const quizId = Number(formData.get("quizId"));
-    if (isNaN(quizId)) {
+    const parsed = parseFormData(formData, submitQuizSchema);
+    if (!parsed.success) {
       throw data("Invalid quiz ID", { status: 400 });
     }
+    const { quizId } = parsed.data;
     // Scope the quiz to this lesson so a quiz elsewhere can't be reached by
     // posting its id to this route.
     const quiz = getQuizById(quizId);
