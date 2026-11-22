@@ -141,28 +141,32 @@ export function computeResult(
     const passed = scoreValue > 0.7;
     const grade = calculateGrade(scoreValue);
 
-    const attempt = db
-      .insert(quizAttempts)
-      .values({
-        userId,
-        quizId,
-        score: scoreValue,
-        passed,
-      })
-      .returning()
-      .get();
+    const answers = questionResults.flatMap((result) =>
+      result.selectedOptionId === null
+        ? []
+        : [
+            {
+              questionId: result.questionId,
+              selectedOptionId: result.selectedOptionId,
+            },
+          ]
+    );
 
-    for (const result of questionResults) {
-      if (result.selectedOptionId !== null) {
-        db.insert(quizAnswers)
-          .values({
-            attemptId: attempt.id,
-            questionId: result.questionId,
-            selectedOptionId: result.selectedOptionId,
-          })
+    const attempt = db.transaction((tx) => {
+      const inserted = tx
+        .insert(quizAttempts)
+        .values({ userId, quizId, score: scoreValue, passed })
+        .returning()
+        .get();
+      if (answers.length > 0) {
+        tx.insert(quizAnswers)
+          .values(
+            answers.map((answer) => ({ ...answer, attemptId: inserted.id }))
+          )
           .run();
       }
-    }
+      return inserted;
+    });
 
     return {
       attemptId: attempt.id,
