@@ -5,6 +5,7 @@ import {
   quizOptions,
   quizAttempts,
   quizAnswers,
+  QuestionType,
 } from "~/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 
@@ -104,7 +105,7 @@ export function computeResult(
       }
 
       let correctOptionId = null;
-      if (q.questionType === "multiple_choice") {
+      if (q.questionType === QuestionType.MultipleChoice) {
         const opts = db
           .select()
           .from(quizOptions)
@@ -112,7 +113,7 @@ export function computeResult(
           .all();
         const correctOpt = opts.find((o) => o.isCorrect === true);
         correctOptionId = correctOpt ? correctOpt.id : null;
-      } else if (q.questionType === "true_false") {
+      } else if (q.questionType === QuestionType.TrueFalse) {
         const correctOpt = db
           .select()
           .from(quizOptions)
